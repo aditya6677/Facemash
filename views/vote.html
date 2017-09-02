@@ -1,0 +1,14 @@
+{{#if photo}}
+	<img src="photos/{{photo.name}}" width="" height="" alt="Girls Picture" />
+	<div class="button-holder">
+		<form action="./hot" method="post">
+			<input type="hidden" name="photo" value="{{photo.name}}" />
+			<input type="submit" value="Hot!" />
+		</form>
+		<form action="./nothot" method="post">
+			<input type="hidden" name="photo" value="{{photo.name}}" />
+			<input type="submit" value="Not!" />
+		</form>
+	</div>
+{{else}}
+{{/if}}
