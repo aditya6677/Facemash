@@ -2,7 +2,12 @@ var express = require('express');
 var passport = require('passport');
 var Strategy = require('passport-facebook').Strategy;
 var handlebars = require('express-handlebars');
+var path = require('path');
+var	fs = require('fs');
+var bp = require('body-parser');
+var multer  = require('multer')
 var app = express();
+
 var db = require('./database');
 var	photos = db.photos;
 var	users = db.users;
@@ -20,7 +25,7 @@ app.use(express.urlencoded());
 
 passport.use(new Strategy({
     clientID: '1398282383558395',
-    clientSecret: '57b48de00cb5511870efb92865a2c72e',
+    clientSecret: '',
     callbackURL: 'http://localhost:7676/auth/facebook/callback',
     profileFields: ['id', 'displayName', 'name', 'gender', 'picture.type(large)']
   },
@@ -44,9 +49,32 @@ app.use(require('express-session')({ secret: 'keyboard cat', resave: true, saveU
 app.use(passport.initialize());
 app.use(passport.session());
 
-app.get('/',
+app.get('/',require('connect-ensure-login').ensureLoggedIn(),
   function(req, res) {
-    res.render('home', { user: req.user });
+		var gen=req.user.gender;
+		var ngen=gen.charAt(0).toUpperCase()+gen.substring(1,gen.length);
+		photos.find({}, function(err, saaripic){
+			users.find({ip: req.ip}, function(err, u){
+				var krdia = [];
+				if(u.length == 1){
+					krdia = u[0].votes;
+				}
+				var nakia = saaripic.filter(function(photo){
+					return krdia.indexOf(photo._id) == -1;
+				});
+				var showpic = null;
+				if(nakia.length > 0){
+					showpic = nakia[Math.floor(Math.random()*nakia.length)];
+				}
+				var gen=req.user.gender;
+				var ngen=gen.charAt(0).toUpperCase()+gen.substring(1,gen.length);
+				saaripic.sort(function(p1, p2){
+					return (p2.likes - p2.dislikes) - (p1.likes - p1.dislikes);
+				});
+				res.render('home', { photo: showpic, user : req.user, mg:ngen, standings: saaripic});
+			});
+		});
+
   });
 
 app.get('/login',
@@ -63,12 +91,20 @@ app.get('/auth/facebook/callback',
     res.redirect('/');
   });
 
-app.get('/vote',
-  require('connect-ensure-login').ensureLoggedIn(),
-  function(req, res){
-    //res.send(req.user);
-    //res.render('vote', { user: req.user });
-    photos.find({}, function(err, saaripic){
+app.get('/logout', function(req, res){
+	  req.logout();
+	  res.redirect('/login');
+	});
+
+app.get('/jsondata',require('connect-ensure-login').ensureLoggedIn(),function(req,res){
+	res.send(req.user);
+});
+
+app.get('/upload',require('connect-ensure-login').ensureLoggedIn(),function(req,res){
+
+		var gen=req.user.gender;
+		var ngen=gen.charAt(0).toUpperCase()+gen.substring(1,gen.length);
+		photos.find({}, function(err, saaripic){
 			users.find({ip: req.ip}, function(err, u){
 				var krdia = [];
 				if(u.length == 1){
@@ -81,19 +117,49 @@ app.get('/vote',
 				if(nakia.length > 0){
 					showpic = nakia[Math.floor(Math.random()*nakia.length)];
 				}
-				res.render('vote', { photo: showpic });
+				var gen=req.user.gender;
+				var ngen=gen.charAt(0).toUpperCase()+gen.substring(1,gen.length);
+				saaripic.sort(function(p1, p2){
+					return (p2.likes - p2.dislikes) - (p1.likes - p1.dislikes);
+				});
+				res.render('upload', { photo: showpic, user : req.user, mg:ngen, standings: saaripic});
 			});
 		});
+
+  });
+
+var storage = multer.diskStorage({
+	destination: function(req, file, callback) {
+		callback(null, './public/photos')
+	},
+	filename: function(req, file, callback) {
+		callback(null, file.fieldname + '-' + Date.now() + path.extname(file.originalname))
+	}
 });
 
-app.get('/standings', function(req, res){
-		photos.find({}, function(err, saaripic){
-			saaripic.sort(function(p1, p2){
-				return (p2.likes - p2.dislikes) - (p1.likes - p1.dislikes);
-			});
-			res.render('standings', { standings: saaripic });
-		});
-	});
+app.post('/upload', function(req, res) {
+	var upload = multer({
+		storage: storage,
+		fileFilter: function(req, file, callback) {
+			var ext = path.extname(file.originalname)
+			if (ext !== '.png' && ext !== '.jpg' && ext !== '.gif' && ext !== '.jpeg') {
+				return callback(res.end('Only images are allowed'), null)
+			}
+			callback(null, true)
+		}
+	}).single('file');
+	upload(req, res, function(err) {
+    var gname=req.body.uname;
+      photos.insert({
+          name: req.file.filename,
+          naam: gname,
+          likes: 0,
+          dislikes: 0
+        });
+  res.send('file uploaded');
+  });
+});
+
 app.post('*', function(req, res, next){
 		users.insert({
 			ip: req.ip,
@@ -115,11 +181,11 @@ function vote(req, res){
   	if(found.length == 1){
   				photos.update(found[0], {$inc : what[req.path]});
   				users.update({ip: req.ip}, { $addToSet: { votes: found[0]._id}}, function(){
-  				res.redirect('vote');
+  				res.redirect('/');
   				});
   	}
   	else{
-  				res.redirect('vote');
+  				res.redirect('/');
   			}
   		});
   	}

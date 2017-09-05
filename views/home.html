@@ -1,6 +1,100 @@
 {{#if user}}
-  <p>Hello {{user.displayName}} !</p>
-  <p><a href="/vote">Vote Here</a> Or Participate in Contest</p>
+<div class="wrapper">
+  <header class="main-header hidden-print"><a class="logo" href="/">Facemash</a>
+    <nav class="navbar navbar-static-top">
+      <!-- Sidebar toggle button--><a class="sidebar-toggle" href="#" data-toggle="offcanvas"></a>
+      <div class="navbar-custom-menu">
+        <ul class="top-nav">
+          <li><a href="/logout"><i class="fa fa-sign-out fa-lg">&nbsp Logout</i></a>
+          </li>
+        </ul>
+      </div>
+    </nav>
+  </header>
+  <aside class="main-sidebar hidden-print">
+    <section class="sidebar">
+      <div class="user-panel">
+        <div class="pull-left image"><img class="img-circle" src="https://s3.amazonaws.com/uifaces/faces/twitter/jsa/48.jpg" alt="User Image"></div>
+        <div class="pull-left info">
+          <p>{{user.displayName}}</p>
+          <p class="designation">{{mg}}</p>
+          <hr>
+        </div>
+      </div>
+      <ul class="sidebar-menu">
+        <li class="active"><a href="/"><i class="fa fa-dashboard"></i><span>Dashboard</span></a></li>
+        <li class=""><a href="/upload"><i class="fa fa-address-card"></i><span>Participate</span></a></li>
+        <li class=""><a href="/"><i class="fa fa-upload"></i><span>Uploads</span></a></li>
+        <li class=""><a href="/"><i class="fa fa-crop"></i><span>Cropper</span></a></li>
+      </ul>
+    </section>
+  </aside>
+  <div class="content-wrapper">
+    <div class="page-title">
+      <div>
+        <h1><i class="fa fa-dashboard"></i> Dashboard</h1>
+      </div>
+      <div>
+        <ul class="breadcrumb">
+          <li><i class="fa fa-home fa-lg"></i></li>
+          <li><a href="#">Dashboard</a></li>
+        </ul>
+      </div>
+    </div>
+      <div class="row">
+      <div class="col-md-9">
+        <div class="card fuck">
+          {{#if photo}}
+          <h3 class="card-title">Vote for {{photo.naam}}</h3>
+            <div>
+              	<img src="photos/{{photo.name}}" width="860" height="560" alt="Girls Picture" />
+                    <form class="mt-40 mb-20" action="./hot" method="post">
+                      <input type="hidden" name="photo" value="{{photo.name}}" />
+                      <input class="btnpad col-xs-1 btn btn-danger" type="submit" value="Hot!" />
+                    </form>
+                    <form class="" action="./nothot" method="post">
+                      <input type="hidden" name="photo" value="{{photo.name}}" />
+                      <input class="btnnot btn btn-info" type="submit" value="&nbsp &nbsp Not! &nbsp &nbsp" />
+                    </form>
+              </div>
+          {{else}}
+            <h3>You Have Voted For All the Photos... Thanks</h3>
+          {{/if}}
+
+            </div>
+        </div>
+
+
+      <div class="col-md-3">
+        <div id="right" class="card">
+          <h3 class="card-title fuck">Leaderboard</h3>
+          {{#if standings}}
+          	<ul>
+          		{{#each standings}}
+          			<img class="col-md-12" src="photos/{{name}}" height="150" width="175" alt="Girls thumbnail" />
+                <div class="hnal">
+                  <p><b>{{this.naam}}</b></p>
+            			<p class="up">Hot {{this.likes}}</p>
+            			<p class="down">Not {{this.dislikes}}</p>
+                </div>
+          		{{/each}}
+          	</ul>
+          {{/if}}
+        </div>
+      </div>
+
+      </div>
+    </div>
+  </div>
+
+</div>
+
+
+
+
+
+
+
 {{else}}
   <p>Welcome! Please <a href="/login">log in</a></p>
 {{/if}}
